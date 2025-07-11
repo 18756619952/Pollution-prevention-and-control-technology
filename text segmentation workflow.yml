@@ -1,0 +1,896 @@
+app:
+  description: iCHN-DeepGen，iCHN深度智能，致力于研究各行业工作流
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 数据拆解标注V2.5-通用格式
+  use_icon_as_answer_icon: true
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tongyi:0.0.18@ca40ec06ff35ca611fa5fdf99a15eeb007a9fe3bd725c9ff6d0436469ab0edc9
+kind: app
+version: 0.1.5
+workflow:
+  conversation_variables:
+  - description: 文档摘要
+    id: b72e7c87-44c3-43be-9545-311c43092b21
+    name: file_catalog
+    selector:
+    - conversation
+    - file_catalog
+    value: ''
+    value_type: string
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types:
+      - image
+      - document
+      allowed_file_upload_methods:
+      - remote_url
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 150
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 1
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: document-extractor
+      id: 1741594023115-source-1741600830294-target
+      selected: false
+      source: '1741594023115'
+      sourceHandle: source
+      target: '1741600830294'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: assigner
+      id: 17416137326150-source-1741620351277-target
+      selected: false
+      source: '17416137326150'
+      sourceHandle: source
+      target: '1741620351277'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: answer
+      id: 17416138048660-source-1741623871866-target
+      selected: false
+      source: '17416138048660'
+      sourceHandle: source
+      target: '1741623871866'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: assigner
+        targetType: code
+      id: 1741620351277-source-17417014389690-target
+      selected: false
+      source: '1741620351277'
+      sourceHandle: source
+      target: '17417014389690'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: answer
+      id: 17417014389690-source-answer-target
+      selected: false
+      source: '17417014389690'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: document-extractor
+        targetType: code
+      id: 1741600830294-source-17416138048660-target
+      source: '1741600830294'
+      sourceHandle: source
+      target: '17416138048660'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: iteration
+      id: 17416139276450-source-1742610480960-target
+      source: '17416139276450'
+      sourceHandle: source
+      target: '1742610480960'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: iteration
+        targetType: code
+      id: 1742610480960-source-17426108174310-target
+      source: '1742610480960'
+      sourceHandle: source
+      target: '17426108174310'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: assigner
+        targetType: code
+      id: 1741620351277-source-17416139276450-target
+      source: '1741620351277'
+      sourceHandle: source
+      target: '17416139276450'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: document-extractor
+        targetType: code
+      id: 1741600830294-source-1742617024497-target
+      source: '1741600830294'
+      sourceHandle: source
+      target: '1742617024497'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: llm
+      id: 1742617024497-source-17416137326150-target
+      source: '1742617024497'
+      sourceHandle: source
+      target: '17416137326150'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: answer
+      id: 17426108174310-source-1742620266574-target
+      source: '17426108174310'
+      sourceHandle: source
+      target: '1742620266574'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: true
+        iteration_id: '1742610480960'
+        sourceType: iteration-start
+        targetType: llm
+      id: 1742610480960start-source-1742610516656-target
+      source: 1742610480960start
+      sourceHandle: source
+      target: '1742610516656'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1742610480960'
+        sourceType: llm
+        targetType: llm
+      id: 1742610516656-source-1743935854682-target
+      source: '1742610516656'
+      sourceHandle: source
+      target: '1743935854682'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1742610480960'
+        sourceType: llm
+        targetType: code
+      id: 1743935854682-source-1742610656600-target
+      source: '1743935854682'
+      sourceHandle: source
+      target: '1742610656600'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - allowed_file_extensions: []
+          allowed_file_types:
+          - image
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          label: 上传文件
+          max_length: 48
+          options: []
+          required: true
+          type: file
+          variable: file_name
+        - label: 输出文件名(最好是中文名，不要加数字，英文的话用小写字母)
+          max_length: 256
+          options: []
+          required: true
+          type: text-input
+          variable: text_name
+      height: 115
+      id: '1741594023115'
+      position:
+        x: 30
+        y: 260.5
+      positionAbsolute:
+        x: 30
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#17417014389690.result#}}
+
+          <hr style="border: 1px solid red;">'
+        desc: ''
+        selected: false
+        title: 直接回复
+        type: answer
+        variables: []
+      height: 120
+      id: answer
+      position:
+        x: 2351.5
+        y: 260.5
+      positionAbsolute:
+        x: 2351.5
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        is_array_file: false
+        selected: false
+        title: 文档提取器
+        type: document-extractor
+        variable_selector:
+        - '1741594023115'
+        - file_name
+      height: 91
+      id: '1741600830294'
+      position:
+        x: 334
+        y: 260.5
+      positionAbsolute:
+        x: 334
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1742617024497'
+          - result
+        desc: ''
+        model:
+          completion_params:
+            max_tokens: 8192
+            temperature: 0
+          mode: chat
+          name: qwen-max-latest
+          provider: langgenius/tongyi/tongyi
+        prompt_template:
+        - id: b2f83c10-6711-4d2a-a386-06b62c766d85
+          role: system
+          text: "你是一名专业文档分析师，擅长从技术文档/论文中提取结构化大纲。需完成：\n- 识别标题层级（H1-H6）\n- 统计章节分布与内容概要\n\
+            - 输出带缩进层级的摘要树\n\n任务步骤：\n1. 通读文档，标记所有标题（格式如#、##等）；\n2. 按缩进层级构建大纲树（H1为一级，H2为二级，类推）；\n\
+            3. 为每个章节生成1-2句内容摘要；\n4. 输出Markdown格式的层级列表，包含标题和摘要。\n例如\n输出格式：\nmarkdown\n\
+            - [标题层级] 标题文本  \n  摘要：本节核心内容（100字内）\n\n示例输入：\n# 引言  \n## 研究背景  \n### 行业现状\
+            \  \n## 研究方法  \n\n示例输出：\n- [H1] 引言  \n   摘要：阐述研究背景与方法论  \n  - [H2] 研究背景\
+            \  \n     摘要：分析行业现状与问题  \n    - [H3] 行业现状  \n       摘要：描述当前市场数据  \n  -\
+            \ [H2] 研究方法  \n    摘要：说明实验设计与技术路线  \n\n注：基于原文，不允许补充内容，不允许扩写内容"
+        - id: 8e2440f2-52e2-4bd4-8df0-b4f863901adf
+          role: user
+          text: '需要处理的文档内容为：
+
+            {{#context#}}'
+        retry_config:
+          max_retries: 3
+          retry_enabled: false
+          retry_interval: 1000
+        selected: false
+        title: 大纲摘要
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - sys
+            - files
+          enabled: false
+      height: 89
+      id: '17416137326150'
+      position:
+        x: 942
+        y: 260.5
+      positionAbsolute:
+        x: 942
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "def main(arg1) -> dict:\n\treturn {\n\t\t\"result\": len(arg1)\n\t\t\
+          }"
+        code_language: python3
+        desc: ''
+        outputs:
+          result:
+            children: null
+            type: number
+        selected: false
+        title: 代码执行(总行数）
+        type: code
+        variables:
+        - value_selector:
+          - '1741600830294'
+          - text
+          variable: arg1
+      height: 53
+      id: '17416138048660'
+      position:
+        x: 638
+        y: 414
+      positionAbsolute:
+        x: 638
+        y: 414
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "def main(large_string, segment_length=4500, overlap=500):\n    # 计算字符串的总长度\n\
+          \    total_length = len(large_string)\n    \n    # 初始化结果列表\n    segments\
+          \ = []\n    \n    # 初始化起始索引\n    start = 0\n    \n    # 循环切分字符串\n    while\
+          \ start < total_length:\n        # 计算当前段的结束索引\n        end = start + segment_length\n\
+          \        \n        # 如果结束索引超出总长度，则调整为总长度\n        if end > total_length:\n\
+          \            end = total_length\n        \n        # 截取当前段字符串\n        segment\
+          \ = large_string[start:end]\n        \n        # 将当前段添加到结果列表\n        segments.append(segment)\n\
+          \        \n        # 更新起始索引，考虑到重叠部分\n        start += segment_length - overlap\n\
+          \        \n        # 如果剩余字符不足一个完整的非重叠段，则结束循环\n        if start >= total_length:\n\
+          \            break\n    \n    # 返回用英文逗号分隔的字符串数组表示（实际返回列表，逗号分隔仅用于说明用途） \n\
+          \    return {\n\t\t\"result\": segments\n\t\t}"
+        code_language: python3
+        default_value:
+        - key: result
+          type: array[string]
+          value: '[]'
+        desc: ''
+        error_strategy: default-value
+        outputs:
+          result:
+            children: null
+            type: array[string]
+        selected: false
+        title: 文档拆解
+        type: code
+        variables:
+        - value_selector:
+          - '1741600830294'
+          - text
+          variable: large_string
+      height: 89
+      id: '17416139276450'
+      position:
+        x: 1550
+        y: 459.5
+      positionAbsolute:
+        x: 1550
+        y: 459.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '17416137326150'
+          - text
+          variable_selector:
+          - conversation
+          - file_catalog
+          write_mode: over-write
+        selected: false
+        title: 变量赋值
+        type: assigner
+        version: '2'
+      height: 87
+      id: '1741620351277'
+      position:
+        x: 1246
+        y: 260.5
+      positionAbsolute:
+        x: 1246
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '文档字数：
+
+          {{#17416138048660.result#}}
+
+          <hr style="border: 1px solid red;">
+
+          '
+        desc: ''
+        selected: false
+        title: 直接回复 4
+        type: answer
+        variables: []
+      height: 136
+      id: '1741623871866'
+      position:
+        x: 942
+        y: 390.5
+      positionAbsolute:
+        x: 942
+        y: 390.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import os\n\ndef main(arg1: str, arg2: str,text_name) -> dict:\n  \
+          \  file_path = f'/tmp/file/{text_name}_Abstract.md'\n\n    with open(file_path,\
+          \ 'w', encoding='utf-8') as f:\n        f.write(arg1)\n    return {\n  \
+          \      \"result\": '\\n 摘要文件生成完毕！ \\n'\n    }\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: 摘要文件生成
+        type: code
+        variables:
+        - value_selector:
+          - '17416137326150'
+          - text
+          variable: arg1
+        - value_selector:
+          - sys
+          - user_id
+          variable: arg2
+        - value_selector:
+          - '1741594023115'
+          - text_name
+          variable: text_name
+      height: 53
+      id: '17417014389690'
+      position:
+        x: 1550
+        y: 260.5
+      positionAbsolute:
+        x: 1550
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        error_handle_mode: terminated
+        height: 233
+        is_parallel: true
+        iterator_selector:
+        - '17416139276450'
+        - result
+        output_selector:
+        - '1742610516656'
+        - text
+        output_type: array[string]
+        parallel_nums: 10
+        selected: false
+        start_node_id: 1742610480960start
+        title: 迭代
+        type: iteration
+        width: 1238.571428571429
+      height: 233
+      id: '1742610480960'
+      position:
+        x: 1854
+        y: 421.5
+      positionAbsolute:
+        x: 1854
+        y: 421.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 1239
+      zIndex: 1
+    - data:
+        desc: ''
+        isInIteration: true
+        selected: false
+        title: ''
+        type: iteration-start
+      draggable: false
+      height: 48
+      id: 1742610480960start
+      parentId: '1742610480960'
+      position:
+        x: 24
+        y: 68
+      positionAbsolute:
+        x: 1878
+        y: 489.5
+      selectable: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-iteration-start
+      width: 44
+      zIndex: 1002
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1742610480960'
+          - item
+        desc: ''
+        isInIteration: true
+        iteration_id: '1742610480960'
+        model:
+          completion_params:
+            max_tokens: 8192
+            response_format: JSON
+            temperature: 0
+          mode: chat
+          name: qwen-max-latest
+          provider: langgenius/tongyi/tongyi
+        prompt_template:
+        - id: 71bb2009-c6f9-478b-ad65-c807197b89b8
+          role: system
+          text: "你是一位专业数据清洗及标注工程师；\n请先阅读并理解本文档的全部大纲，\n<文本大纲>为：{{#conversation.file_catalog#}}\n\
+            再按以下规则处理文本，\n<文本内容>为：{{#context#}}\n\n一、数据清洗‌：\n1、提取结构化正文\n2、过滤噪声内容，移除页眉/页脚、广告、版权声明、乱码、空白行、无效数据行、重复段落\n\
+            3、自动合并碎片化段落（<80字节且无标点）‌\n4、识别并标记专业术语\n\n二、数据标注：\n1、动态分段机制\n   - 基础段长：200±50字节，允许学术类扩展至450字节‌\n\
+            \   - 对话类强制分段规则：每3轮对话必须拆分段落‌}\n   - 保留逻辑标记符：如\"首先/其次/最后\"等序列词需在同一段落‌\n\
+            \n2、标签tags构成\n\n**标题**：标题1/标题2/标题3/标题4/标题5/等等(从大纲和本段文字前1000字内搜索，获取分级标题）\n\
+            \n**增强语义关联**  \n   - 为每个分段补充以下字段：  \n     - `keywords`: 从分段中提取3-5个核心关键词（名词/术语）\
+            \  \n     - `synonyms`: 从分段中生成3-5个同义表述（如“如何训练模型？”→“模型训练步骤有哪些？”）  \n  \
+            \   - `entities`: 识别分段中的专业实体（如模型名称、算法、工具）  \n   - 示例： \n 原输入： \"\"机器学习是人工智能的一个分支，通过数据训练模型\"\
+            \ntags输出要包含：\n     {\n       \"keywords\": [\"机器学习\", \"数据训练\", \"人工智能\"\
+            , \"模型\"],  \n       \"synonyms\": [\"机器学习定义是什么\", \"请解释机器学习\", \"机器学习的基本概念\"\
+            ],  \n       \"entities\": [\"随机森林\", \"神经网络\", \"Scikit-learn\"]\n  \
+            \   }\n\n3、特殊处理\n冲突解决机制\n   - 当相邻段落标签重复率＞60%，触发智能合并‌\n   - 语义断裂检测：使用<gap>标记逻辑跳跃点‌\n\
+            \n4、整合输出\n将  \"文章标题\"，\"层级标题\"，\"keywords\"， \"synonyms\"， \"entities\"\
+            全部整合到一个标签\"tags\"里面，其余形式保持不变。\n\n5、示例：\n输入段落：\n\"商学院关于加强疫情防控工作要求的通知  \n\
+            为做好新型冠状病毒的防控工作，现就商学院工作落实情况通知如下：  \n一、提高政治站位  \n分院全体师生要切实增强“四个意识”，坚定“四个自信”，深刻认识到疫情防控工作的重要性和紧迫性，坚决贯彻落实党中央、国务院以及省、市关于疫情防控工作的决策部署，以更严更实更细致的举措把各项工作落实下去，坚决打赢疫情防控狙击战。\
+            \ \"\n\n期望输出：\n{\n  \"segment_01\": {\n    \"text\": \"商学院关于加强疫情防控工作要求的通知\
+            \  \n为做好新型冠状病毒的防控工作，现就商学院工作落实情况通知如下：一、提高政治站位 分院全体师生要切实增强“四个意识”，坚定“四个自信”，深刻认识到疫情防控工作的重要性和紧迫性，坚决贯彻落实党中央、国务院以及省、市关于疫情防控工作的决策部署，以更严更实更细致的举措把各项工作落实下去，坚决打赢疫情防控狙击战。\"\
+            ,\n    \"tags\": [\"商学院关于加强疫情防控工作要求的通知\",\"一、提高政治站位\",\"疫情防控工作\",\"政治站位\"\
+            ,\"决策部署\",\"四个意识\",\"‌四个自信‌\",\"商学院疫情防控的具体措施有哪些\",\"如何落实商学院疫情防控要求”,\"\
+            商学院在疫情防控中的责任与行动是什么\",\"疫情防控狙击战\"]\n  }\n}\n\n注意：\n1、text是原文部分，不允许修改，直接使用上下文的原文部分\n\
+            2、tags内容放在一行，关键词用英文双引号\"\"包围，用英文逗号分割即可\n3、确保上下文全部标注，输出不要有遗漏\n"
+        - id: 8ab1684c-0404-4b29-a410-7d248074d73a
+          role: user
+          text: 最终输出上下文中全部的有效内容，并确保tags行的关键词用英文双引号""包围，用英文逗号分割，不包含其他符号。
+        selected: false
+        title: 数据标注
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 89
+      id: '1742610516656'
+      parentId: '1742610480960'
+      position:
+        x: 246.57142857142844
+        y: 70.85714285714289
+      positionAbsolute:
+        x: 2100.5714285714284
+        y: 492.3571428571429
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 1002
+    - data:
+        code: "import os\nimport re\n\ndef main(arg1: str, arg2: str, index,text_name)\
+          \ -> dict:\n    file_path = f'/tmp/file/part_{text_name}_{index}.md'\n\n\
+          \    with open(file_path, 'w', encoding='utf-8') as f:\n        f.write(re.sub(r'[/\\\
+          \\|：、]', '', arg1))\n    return {\n        \"result\": '文件生成完毕'\n    }\n"
+        code_language: python3
+        desc: ''
+        isInIteration: true
+        iteration_id: '1742610480960'
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: true
+        title: 文件写入
+        type: code
+        variables:
+        - value_selector:
+          - '1743935854682'
+          - text
+          variable: arg1
+        - value_selector:
+          - sys
+          - user_id
+          variable: arg2
+        - value_selector:
+          - '1742610480960'
+          - index
+          variable: index
+        - value_selector:
+          - '1741594023115'
+          - text_name
+          variable: text_name
+      height: 53
+      id: '1742610656600'
+      parentId: '1742610480960'
+      position:
+        x: 978.5714285714289
+        y: 68
+      positionAbsolute:
+        x: 2832.571428571429
+        y: 489.5
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 1002
+    - data:
+        code: "import os\nimport re\n\ndef main(arg1: str,text_name) -> dict:\n  \
+          \  folder = f'/tmp/file/'\n    output = f'/tmp/file/{text_name}_combined_file.txt'\n\
+          \    files = sorted(\n        [f for f in os.listdir(folder) if f.lower().startswith(f'part_{text_name}')\
+          \ and f.endswith('.md')],\n        key=lambda x: int(re.search(r'\\d+',\
+          \ x).group())\n    )\n    with open(output, 'w') as f_out:\n        for\
+          \ file in files:\n            with open(os.path.join(folder, file)) as f_in:\n\
+          \                processing_text = False\n                for line in f_in:\n\
+          \                    line = line.strip()\n                    # 处理text行\n\
+          \                    if '\"text\":' in line:\n                        #\
+          \ 提取第三个双引号到最后一个双引号内容\n                        parts = line.split('\"')\n\
+          \                        if len(parts) >= 4:\n                         \
+          \   content = '\"'.join(parts[3:-1])  # 合并中间可能的双引号\n                   \
+          \         f_out.write(f'{content}@@@\\n')\n                        processing_text\
+          \ = True\n                        continue\n\n                    # 处理tags行\n\
+          \                    if '\"tags\":' in line and processing_text:\n     \
+          \                   # 提取所有双引号内容\n                        parts = [p for\
+          \ p in line[7:].replace('\"', '').split(',') if p]  # 取奇数索引元素\n        \
+          \                if parts:\n                            content = '@@@'.join(parts)\n\
+          \                            \n                            content = re.sub(r'[\\\
+          s\\[\\]]', '', content)\n\n                            f_out.write(f'{content}@@@\\\
+          n')\n                        # 写入分割符\n                        f_out.write('####\\\
+          n')\n                        processing_text = False\n                 \
+          \       continue\n    return {\n        \"result\": '\\n 标注文件生成完毕！ \\n'\n\
+          \    }"
+        code_language: python3
+        desc: ''
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: 文件汇总
+        type: code
+        variables:
+        - value_selector:
+          - sys
+          - user_id
+          variable: arg1
+        - value_selector:
+          - '1741594023115'
+          - text_name
+          variable: text_name
+      height: 53
+      id: '17426108174310'
+      position:
+        x: 3153
+        y: 477.5
+      positionAbsolute:
+        x: 3153
+        y: 477.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "def main(arg1) -> dict:\n\treturn {\n\t\t\t\"result\": arg1[:25000]\n\
+          \t\t}\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: 代码执行
+        type: code
+        variables:
+        - value_selector:
+          - '1741600830294'
+          - text
+          variable: arg1
+      height: 53
+      id: '1742617024497'
+      position:
+        x: 638
+        y: 260.5
+      positionAbsolute:
+        x: 638
+        y: 260.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#17426108174310.result#}}
+
+          <hr style="border: 1px solid red;">'
+        desc: ''
+        selected: false
+        title: 直接回复 3
+        type: answer
+        variables: []
+      height: 120
+      id: '1742620266574'
+      position:
+        x: 3457
+        y: 477.5
+      positionAbsolute:
+        x: 3457
+        y: 477.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1742610480960'
+          - item
+        desc: ''
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1742610480960'
+        model:
+          completion_params:
+            max_tokens: 8192
+            response_format: JSON
+            temperature: 0
+          mode: chat
+          name: qwen-max-latest
+          provider: langgenius/tongyi/tongyi
+        prompt_template:
+        - id: 27669561-e868-4da6-bde5-3349e14654d6
+          role: system
+          text: "你是一位专业法律条文类数据清洗及标注工程师；\n\n<已生成内容>：{{#1742610516656.text#}}\n<文本内容>为：{{#context#}}\n\
+            <文本大纲>为：{{#conversation.file_catalog#}}\n\n你的任务对比<文本内容>与<已生成内容>，确保<已生成内容>里面的文字没有遗漏。\n\
+            如果没有遗漏，则直接输出原文，不做后续处理；\n如果有遗漏，按以下规则按顺序补充遗漏的内容，再结合<已生成内容>一起输出。\n\n\n一、数据清洗‌：\n\
+            1、提取结构化正文\n2、过滤噪声内容，移除页眉/页脚、广告、版权声明、乱码、空白行、无效数据行、重复段落\n3、自动合并碎片化段落（<80字节且无标点）‌\n\
+            4、识别并标记专业术语\n\n二、数据标注：\n1、动态分段机制\n   - 基础段长：200±50字节，允许学术类扩展至450字节‌\n\
+            \   - 对话类强制分段规则：每3轮对话必须拆分段落‌}\n   - 保留逻辑标记符：如\"首先/其次/最后\"等序列词需在同一段落‌\n\
+            \n2、标签tags构成\n\n**标题**：标题1/标题2/标题3/标题4/标题5/等等(从大纲和本段文字前1000字内搜索，获取分级标题）\n\
+            \n**增强语义关联**  \n    - 为每个分段补充以下字段：  \n     - `keywords`: 从分段中提取3-5个核心关键词（名词/术语）\
+            \  \n     - `synonyms`: 从分段中生成3-5个同义表述（如“如何训练模型？”→“模型训练步骤有哪些？”）  \n  \
+            \   - `entities`: 识别分段中的专业实体（如模型名称、算法、工具）  \n   - 示例： \n 原输入： \"\"机器学习是人工智能的一个分支，通过数据训练模型\"\
+            \ntags输出要包含：\n     {\n       \"keywords\": [\"机器学习\", \"数据训练\", \"人工智能\"\
+            , \"模型\"],  \n       \"synonyms\": [\"机器学习定义是什么\", \"请解释机器学习\", \"机器学习的基本概念\"\
+            ],  \n       \"entities\": [\"随机森林\", \"神经网络\", \"Scikit-learn\"]\n  \
+            \   }\n\n3、特殊处理\n冲突解决机制\n   - 当相邻段落标签重复率＞60%，触发智能合并‌\n   - 语义断裂检测：使用<gap>标记逻辑跳跃点‌\n\
+            \n4、整合输出\n将  \"文章标题\"，\"层级标题\"，\"keywords\"， \"synonyms\"， \"entities\"\
+            全部整合到一个标签\"tags\"里面，其余形式保持不变。\n\n5、示例：\n输入段落：\n\"商学院关于加强疫情防控工作要求的通知  \n\
+            为做好新型冠状病毒的防控工作，现就商学院工作落实情况通知如下：  \n一、提高政治站位  \n分院全体师生要切实增强“四个意识”，坚定“四个自信”，深刻认识到疫情防控工作的重要性和紧迫性，坚决贯彻落实党中央、国务院以及省、市关于疫情防控工作的决策部署，以更严更实更细致的举措把各项工作落实下去，坚决打赢疫情防控狙击战。\
+            \ \"\n\n期望输出：\n{\n  \"segment_01\": {\n    \"text\": \"商学院关于加强疫情防控工作要求的通知\
+            \  \n为做好新型冠状病毒的防控工作，现就商学院工作落实情况通知如下：一、提高政治站位 分院全体师生要切实增强“四个意识”，坚定“四个自信”，深刻认识到疫情防控工作的重要性和紧迫性，坚决贯彻落实党中央、国务院以及省、市关于疫情防控工作的决策部署，以更严更实更细致的举措把各项工作落实下去，坚决打赢疫情防控狙击战。\"\
+            ,\n    \"tags\": [\"商学院关于加强疫情防控工作要求的通知\",\"一、提高政治站位\",\"疫情防控工作\",\"政治站位\"\
+            ,\"决策部署\",\"四个意识\",\"‌四个自信‌\",\"商学院疫情防控的具体措施有哪些\",\"如何落实商学院疫情防控要求”,\"\
+            商学院在疫情防控中的责任与行动是什么\",\"疫情防控狙击战\"]\n  }\n}\n\n注意：\n1、text是原文部分，不允许修改，直接使用上下文的原文部分\n\
+            2、tags内容放在一行，关键词用英文双引号\"\"包围，用英文逗号分割即可\n3、确保上下文全部标注，输出不要有遗漏"
+        - id: aff5eab5-fa7f-49f5-bd68-c125c4b8d1fe
+          role: user
+          text: 最终输出上下文中全部的有效内容，并确保tags行的关键词用英文双引号""包围，用英文逗号分割，不包含其他符号。
+        selected: false
+        title: 数据复核
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 89
+      id: '1743935854682'
+      parentId: '1742610480960'
+      position:
+        x: 678.5714285714289
+        y: 68
+      positionAbsolute:
+        x: 2532.571428571429
+        y: 489.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 1002
+    viewport:
+      x: -2311.356858507345
+      y: 46.8744238547518
+      zoom: 0.9025592114330199
