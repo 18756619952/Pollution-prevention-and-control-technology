@@ -19,7 +19,7 @@ This repository contains supplementary materials associated with the manuscript 
 
 | Model | Description |
 |-------|-------------|
-| [`zzzzzzzzzH/EPCG`](https://huggingface.co/zzzzzzzzzH/EPCG) | Fine-tuned language model for pollution guideline interpretation, uploaded to Hugging Face |
+| [`zzzzzzzzzH/EPCG`]([https://huggingface.co/zzzzzzzzzH/EPCG](https://huggingface.co/zzzzzzzzzzH/EPCG/tree/main)) | Fine-tuned language model for pollution guideline interpretation, uploaded to Hugging Face |
 
 ---
 
