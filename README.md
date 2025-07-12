@@ -12,7 +12,7 @@ This repository contains supplementary materials associated with the manuscript 
 - `fine-tune datasets--alpaca--.json`: Structured fine-tuning dataset adapted to the Alpaca format.
 - `Evaluation Dataset.json`: Benchmark data used for performance evaluation.
 - `evaluate.py`: Python script for computing classical generation metrics and semantic similarity.
-- `text segmentation workflow.yml`: Workflow for rule-based and AI-assisted text segmentation.
+- `text segmentation workflow.yml`: Workflow for rule-based and AI-assisted text segmentation（Please import in Dify）.
 
 ---
 ## 🧠 Model
