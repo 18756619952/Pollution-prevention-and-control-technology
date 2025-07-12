@@ -17,9 +17,8 @@ This repository contains supplementary materials associated with the manuscript 
 ---
 ## 🧠 Model
 
-The model data fine tuned based on Llama-factory has been uploaded to HuggingFace，If you need to run it, please copy the data folder to the save file in Llama-Factory and merge it with the Qwen3-8B model for export.
-https://huggingface.co/zzzzzzzzzzH/EPCG/tree/main
-
+The model data fine tuned based on Llama-factory has been uploaded to HuggingFace：https://huggingface.co/zzzzzzzzzzH/EPCG/tree/main
+If you need to run it, please copy the data folder to the save file in Llama-Factory and merge it with the Qwen3-8B model for export.
 
 ---
 
