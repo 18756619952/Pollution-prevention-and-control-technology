@@ -17,9 +17,8 @@ This repository contains supplementary materials associated with the manuscript 
 ---
 ## 🧠 Model
 
-| Model | Description |
-|-------|-------------|
-| [`zzzzzzzzzH/EPCG`]([https://huggingface.co/zzzzzzzzzH/EPCG](https://huggingface.co/zzzzzzzzzzH/EPCG/tree/main]) | Fine-tuned language model for pollution guideline interpretation, uploaded to Hugging Face |
+The model data fine tuned based on Llama-factory has been uploaded to Hugging Face：https://huggingface.co/zzzzzzzzzzH/EPCG/tree/main
+
 
 ---
 
