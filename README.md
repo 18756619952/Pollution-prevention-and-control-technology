@@ -15,7 +15,13 @@ This repository contains supplementary materials associated with the manuscript 
 - `text segmentation workflow.yml`: Workflow for rule-based and AI-assisted text segmentation.
 
 ---
+## 🧠 Model
 
+| Model | Description |
+|-------|-------------|
+| [`zzzzzzzzzH/EPCG`](https://huggingface.co/zzzzzzzzzH/EPCG) | Fine-tuned language model for pollution guideline interpretation, uploaded to Hugging Face |
+
+---
 
 ```bash
 
