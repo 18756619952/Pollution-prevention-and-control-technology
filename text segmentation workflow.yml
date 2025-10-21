@@ -1,9 +1,9 @@
 app:
-  description: iCHN-DeepGen，iCHN深度智能，致力于研究各行业工作流
+  description:
   icon: 🤖
   icon_background: '#FFEAD5'
   mode: advanced-chat
-  name: 数据拆解标注V2.5-通用格式
+  name: 数据拆解标注
   use_icon_as_answer_icon: true
 dependencies:
 - current_identifier: null
