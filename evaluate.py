@@ -1,338 +1,290 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel
 import json
-import pandas as pd
 import re
 import numpy as np
-from rouge import Rouge
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
 import warnings
+from bert_score import score
+from sklearn.model_selection import KFold
+from rouge_score import rouge_scorer
+from transformers import AutoTokenizer, AutoModel
+import torch.nn.functional as F
 
+
+# =========================
+#  K-Fold 控制参数
+# =========================
+NUM_FOLDS = 5
+RUN_SINGLE_FOLD = False
+SINGLE_FOLD_ID = 1
+SEED = 42
+
+# =========================
 # 配置参数
-MODEL_NAME = "/home/zzh/Qwen3-8B"
-LORA_PATH = "./lora_train"
+# =========================
+MODEL_NAME = "/home/zzh/lora_train"
 TEST_DATA_PATH = "combined_test.json"
-MAX_NEW_TOKENS = 1024
-BATCH_SIZE = 4
-NUM_SAMPLES = 50
+MAX_NEW_TOKENS = 2048
+BATCH_SIZE = 8
+NUM_SAMPLES = 100
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)}
 
-# 初始化语义评估模型
-semantic_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-
-# 忽略警告
+SentenceTransformer("intfloat/e5-large-v2")
 warnings.filterwarnings("ignore")
 
-# 加载模型和tokenizer
+# =========================
+# 模型加载
+# =========================
 def load_models():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     tokenizer.padding_side = 'left'
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    os.environ["DISABLE_FLASH_ATTENTION_2"] = "1"
+
     model = AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME,
-    torch_dtype=torch.bfloat16,
-    device_map=device_map,
-    # 移除或注释掉这一行
-    # attn_implementation="flash_attention_2"
-)
-    # model = PeftModel.from_pretrained(model, LORA_PATH)
+        MODEL_NAME,
+        torch_dtype=torch.bfloat16,
+        device_map="auto"
+    )
     model.eval()
+    semantic_model.to(model.device)
+    return tokenizer, model
 
- # 确保所有模型在相同设备上
-    device = model.device
-    semantic_model.to(device)
-    
-    return tokenizer, model, device
+tokenizer, model = load_models()
 
-tokenizer, model, device = load_models()
+# =========================
+# E5 embedding 加载（正确方式）
+# =========================
+E5_NAME = "intfloat/e5-large-v2"
+e5_tokenizer = AutoTokenizer.from_pretrained(E5_NAME)
+e5_model = AutoModel.from_pretrained(E5_NAME).to(DEVICE)
+e5_model.eval()
 
-# 数据加载和预处理
+def encode_e5(texts, batch_size=32):
+    all_emb = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i+batch_size]
+        inputs = e5_tokenizer(
+            batch,
+            padding=True,
+            truncation=True,
+            max_length=512,
+            return_tensors="pt"
+        ).to(DEVICE)
+
+        with torch.no_grad():
+            output = e5_model(**inputs).last_hidden_state
+            attention_mask = inputs["attention_mask"].unsqueeze(-1)
+            emb = (output * attention_mask).sum(dim=1) / attention_mask.sum(dim=1)
+            emb = F.normalize(emb, p=2, dim=1)
+            all_emb.append(emb.cpu())
+
+    return torch.cat(all_emb, dim=0)
+
+# =========================
+# 数据加载
+# =========================
 def load_test_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data[:NUM_SAMPLES]
 
-test_data = load_test_data(TEST_DATA_PATH)
+all_data = load_test_data(TEST_DATA_PATH)
 
-# 改进的文本清理函数（处理思考模式输出的<think>标签）
+# =========================
+# 文本清洗
+# =========================
 def clean_text(text):
-    if not isinstance(text, str):
-        return ""
-    # 移除思考模式标签
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
     text = re.sub(r'<\|im_end\|>|<\|endoftext\|>', '', text)
-    text = re.sub(r'\n+', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-# 计算指标（返回整数百分比）
+# =========================
+# Token 指标
+# =========================
 def calculate_token_metrics(preds, refs):
-    preds = [p for p in preds if p]
-    refs = [r for r in refs if r]
-    
-    if not preds or not refs or len(preds) != len(refs):
-        return {"precision": 0, "recall": 0, "f1": 0, "accuracy": 0}
-    
+    # ✅ 过滤 empty
+    pairs = [(p, r) for p, r in zip(preds, refs) if p.strip() and r.strip()]
+    if not pairs:
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "accuracy": 0.0}
+
     precisions, recalls, f1s, accuracies = [], [], [], []
-    
-    for pred, ref in zip(preds, refs):
-        pred_set = set(pred.split())
-        ref_set = set(ref.split())
-        common = pred_set & ref_set
-        precision = len(common) / len(pred_set) if pred_set else 0
-        recall = len(common) / len(ref_set) if ref_set else 0
-        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-        accuracy = len(common) / len(ref_set) if ref_set else 0
-        
-        precisions.append(precision)
-        recalls.append(recall)
+
+    for pred, ref in pairs:
+        ps, rs = set(pred.split()), set(ref.split())
+        common = ps & rs
+
+        p = len(common) / len(ps) if ps else 0
+        r = len(common) / len(rs) if rs else 0
+        f1 = 2 * p * r / (p + r + 1e-9)
+
+        precisions.append(p)
+        recalls.append(r)
         f1s.append(f1)
-        accuracies.append(accuracy)
-    
+        accuracies.append(r)
+
     return {
-        "precision": np.round(np.mean(precisions), 4),
-        "recall": np.round(np.mean(recalls), 4),
-        "f1": np.round(np.mean(f1s), 4),
-        "accuracy": np.round(np.mean(accuracies), 4)
+        "precision": round(np.mean(precisions), 4),
+        "recall": round(np.mean(recalls), 4),
+        "f1": round(np.mean(f1s), 4),
+        "accuracy": round(np.mean(accuracies), 4)
     }
 
-def calculate_semantic_metrics(preds, refs):
-    preds = [p if p else " " for p in preds]
-    refs = [r if r else " " for r in refs]
-    
-    if not preds or not refs or len(preds) != len(refs):
-        return {
-            "semantic_cosine_mean": 0,
-            "semantic_cosine_std": 0,
-            "semantic_cosine_min": 0,
-            "semantic_cosine_max": 0
-        }
-    
-    batch_size = 32
-    cos_sims = []
-    for i in range(0, len(preds), batch_size):
-        batch_preds = preds[i:i+batch_size]
-        batch_refs = refs[i:i+batch_size]
-        with torch.no_grad():
-            pred_embs = semantic_model.encode(batch_preds, convert_to_tensor=True)
-            ref_embs = semantic_model.encode(batch_refs, convert_to_tensor=True)
-            batch_cos_sims = torch.nn.functional.cosine_similarity(pred_embs, ref_embs)
-            cos_sims.extend(batch_cos_sims.cpu().tolist())
-    
-    return {
-        "semantic_cosine_mean": np.round(np.mean(cos_sims), 4),
-        "semantic_cosine_std": np.round(np.std(cos_sims), 4),
-        "semantic_cosine_min": np.round(np.min(cos_sims), 4),
-        "semantic_cosine_max": np.round(np.max(cos_sims), 4)
-    }
-
+# =========================
+# ROUGE + BLEU（ 官方 rouge-score）
+# =========================
 def calculate_classic_metrics(preds, refs):
-    preds = [p if p else " " for p in preds]
-    refs = [r if r else " " for r in refs]
-    
-    if not preds or not refs or len(preds) != len(refs):
-        return {
-            "rouge-1": 0, "rouge-2": 0, "rouge-l": 0, "bleu": 0,
-            "precision": 0, "recall": 0, "f1": 0, "accuracy": 0
-        }
-    
-    # ROUGE (转换为百分比)
-    rouge = Rouge()
-    try:
-        rouge_scores = rouge.get_scores(preds, refs)
-        rouge_metrics = {
-            "rouge-1": np.round(sum(s['rouge-1']['f'] for s in rouge_scores) / len(rouge_scores), 4),
-            "rouge-2": np.round(sum(s['rouge-2']['f'] for s in rouge_scores) / len(rouge_scores), 4),
-            "rouge-l": np.round(sum(s['rouge-l']['f'] for s in rouge_scores) / len(rouge_scores), 4)
-        }
-    except:
-        rouge_metrics = {"rouge-1": 0, "rouge-2": 0, "rouge-l": 0}
-    
-    # BLEU (转换为百分比)
+    scorer = rouge_scorer.RougeScorer(['rouge1','rouge2','rougeL'], use_stemmer=False)
     smoothie = SmoothingFunction().method4
-    bleu_scores = []
-    for p, r in zip(preds, refs):
-        try:
-            bleu_scores.append(sentence_bleu([r.split()], p.split(), smoothing_function=smoothie))
-        except:
-            bleu_scores.append(0)
-    rouge_metrics["bleu"] = np.round(sum(bleu_scores) / len(bleu_scores), 4)
-    
-    # Token级指标
-    token_metrics = calculate_token_metrics(preds, refs)
-    rouge_metrics.update(token_metrics)
-    
-    return rouge_metrics
 
-def batch_generate(questions, question_types):
+    r1, r2, rl, bleu_scores = [], [], [], []
+
+    # ✅ 过滤 empty
+    pairs = [(p, r) for p, r in zip(preds, refs) if p.strip() and r.strip()]
+    if not pairs:
+        return {
+            "rouge-1": 0.0, "rouge-2": 0.0, "rouge-l": 0.0,
+            "bleu": 0.0, "precision": 0.0, "recall": 0.0,
+            "f1": 0.0, "accuracy": 0.0
+        }
+
+    for p, r in pairs:
+        scores = scorer.score(r, p)
+        r1.append(scores['rouge1'].fmeasure)
+        r2.append(scores['rouge2'].fmeasure)
+        rl.append(scores['rougeL'].fmeasure)
+        bleu_scores.append(sentence_bleu([r.split()], p.split(), smoothing_function=smoothie))
+
+    token_metrics = calculate_token_metrics(
+        [p for p, r in pairs],
+        [r for p, r in pairs]
+    )
+
+    return {
+        "rouge-1": round(np.mean(r1), 4),
+        "rouge-2": round(np.mean(r2), 4),
+        "rouge-l": round(np.mean(rl), 4),
+        "bleu": round(np.mean(bleu_scores), 4),
+        **token_metrics
+    }
+
+# =========================
+# 语义相似度（过滤 empty）
+# =========================
+def calculate_semantic_metrics(preds, refs):
+    pairs = [(p, r) for p, r in zip(preds, refs) if p.strip() and r.strip()]
+    preds = [p for p, r in pairs]
+    refs  = [r for p, r in pairs]
+
+    pred_emb = encode_e5(preds)
+    ref_emb  = encode_e5(refs)
+
+    cos = torch.nn.functional.cosine_similarity(pred_emb, ref_emb).numpy()
+
+    return {
+        "semantic_cosine_mean": round(np.mean(cos), 4),
+        "semantic_cosine_std":  round(np.std(cos), 4),
+        "semantic_cosine_min":  round(np.min(cos), 4),
+        "semantic_cosine_max":  round(np.max(cos), 4)
+    }
+
+
+# =========================
+# 中文 BERTScore（过滤 empty）
+# =========================
+def calculate_bertscore(preds, refs):
+    pairs = [(p, r) for p, r in zip(preds, refs) if p.strip() and r.strip()]
+    preds = [p for p, r in pairs]
+    refs  = [r for p, r in pairs]
+
+    P, R, F1 = score(preds, refs, lang="zh", verbose=False)
+
+    return {
+        "bertscore_precision_mean": round(P.mean().item(), 4),
+        "bertscore_precision_std":  round(P.std().item(), 4),
+        "bertscore_recall_mean":    round(R.mean().item(), 4),
+        "bertscore_recall_std":     round(R.std().item(), 4),
+        "bertscore_f1_mean":        round(F1.mean().item(), 4),
+        "bertscore_f1_std":         round(F1.std().item(), 4)
+    }
+
+# =========================
+# 生成
+# =========================
+def batch_generate(questions):
     all_responses = []
-    
-    for i in tqdm(range(0, len(questions), BATCH_SIZE), desc="Generating"):
-        batch = questions[i:i+BATCH_SIZE]
-        batch_types = question_types[i:i+BATCH_SIZE]
-        
-        # 为每个问题准备输入（根据type决定enable_thinking）
-        inputs = []
-        for q, q_type in zip(batch, batch_types):
-            messages = [
-                {"role": "system", "content": "You are a helpful medical assistant."},
-                {"role": "user", "content": q}
-            ]
-            inputs.append(
-                tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=True,
-                    enable_thinking=(q_type == "reason")  # 关键修改：根据type启用思考模式
-                )
-            )
-        
-        # Tokenize并生成
-        inputs = tokenizer(
-            inputs,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=2048
-        )
-        device = next(model.parameters()).device
-        # 将所有张量移动到指定的设备上
-        for key, value in inputs.items():
-            inputs[key] = value.to(device)
-        
+
+    for q in tqdm(questions):
+        inputs = tokenizer(q, return_tensors="pt").to(model.device)
         with torch.no_grad():
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=MAX_NEW_TOKENS,
-                temperature=0.8,
-                top_p=0.9,
-                do_sample=True,
-                pad_token_id=tokenizer.eos_token_id,
-                eos_token_id=tokenizer.eos_token_id
-            )
-        
-        # 解码并清理
-        decoded = tokenizer.batch_decode(
-            outputs[:, inputs.input_ids.shape[1]:],
-            skip_special_tokens=False
-        )
-        cleaned = [clean_text(d) for d in decoded]
-        all_responses.extend(cleaned)
-        
-        # 清理内存
-        del inputs, outputs
-        torch.cuda.empty_cache()
-    
+            outputs = model.generate(**inputs, max_new_tokens=MAX_NEW_TOKENS)
+
+        decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        all_responses.append(clean_text(decoded))
+
     return all_responses
 
-def evaluate():
-    questions = [d["question"] for d in test_data]
-    references = [d["answer"] for d in test_data]
-    cots = [d.get("cot", "") for d in test_data]
-    question_types = [d["type"] for d in test_data]
-    
-    # 生成回答
-    answers = batch_generate(questions, question_types)
-    
-    # 准备评估数据
-    eval_data = []
-    for i, (q, ref, cot, q_type) in enumerate(zip(questions, references, cots, question_types)):
-        eval_data.append({
-            "question": q,
-            "generated": answers[i] if i < len(answers) else "",
-            "reference": ref,
-            "cot_reference": cot,
-            "type": q_type
-        })
-    
-    # 计算指标
-    metrics = {}
-    
-    # 1. Answer部分评估（所有样本）
-    gen_answers = [d["generated"] for d in eval_data]
-    ref_answers = [d["reference"] for d in eval_data]
-    
-    metrics["answer"] = {
-        "classic": calculate_classic_metrics(gen_answers, ref_answers),
-        "semantic": calculate_semantic_metrics(gen_answers, ref_answers)
-    }
-    
-    # 2. CoT部分评估（仅reason类型且有cot_reference的样本）
-    cot_data = [d for d in eval_data if d["type"] == "reason" and d["cot_reference"]]
-    if cot_data:
-        gen_cots = [d["generated"] for d in cot_data]
-        ref_cots = [d["cot_reference"] for d in cot_data]
-        
-        metrics["cot"] = {
-            "classic": calculate_classic_metrics(gen_cots, ref_cots),
-            "semantic": calculate_semantic_metrics(gen_cots, ref_cots)
-        }
-        print(f"\nEvaluated {len(cot_data)} CoT samples")
-    else:
-        print("\nNo CoT samples to evaluate")
-        metrics["cot"] = None
-    
-    # 3. Combined评估（所有样本，reason类型拼接cot）
-    combined_gen = []
-    combined_ref = []
-    for d in eval_data:
-        if d["type"] == "reason" and d["cot_reference"]:
-            # 对于有CoT的样本，拼接生成内容和参考CoT
-            combined_gen.append(f"{d['generated']} {d['cot_reference']}")
-            combined_ref.append(f"{d['reference']} {d['cot_reference']}")
-        else:
-            # 对于没有CoT的样本，只使用回答部分
-            combined_gen.append(d["generated"])
-            combined_ref.append(d["reference"])
-    
-    metrics["combined"] = {
-        "classic": calculate_classic_metrics(combined_gen, combined_ref),
-        "semantic": calculate_semantic_metrics(combined_gen, combined_ref)
-    }
-    
-    # 保存结果
-    pd.DataFrame(eval_data).to_csv("base_results.csv", index=False)
-    with open("base_metrics.json", "w") as f:
-        json.dump(metrics, f, indent=2, ensure_ascii=False)
-    
-    return metrics, eval_data
+# =========================
+# 单折评估
+# =========================
+def evaluate_one_fold(fold_data, fold_id):
+    questions = [clean_text(d["question"]) for d in fold_data]
+    references = [clean_text(d["answer"]) for d in fold_data]
 
-def print_metrics(name, data):
-    if data is None:
-        print(f"\n[{name.upper()}] No data to display")
-        return
-    
-    print(f"\n[{name.upper()}]")
-    print("Classic Metrics:")
-    print(f"  ROUGE-1: {data['classic']['rouge-1']}")
-    print(f"  ROUGE-2: {data['classic']['rouge-2']}")
-    print(f"  ROUGE-L: {data['classic']['rouge-l']}")
-    print(f"  BLEU:    {data['classic']['bleu']}")
-    print(f"  Precision: {data['classic']['precision']}")
-    print(f"  Recall:    {data['classic']['recall']}")
-    print(f"  F1:        {data['classic']['f1']}")
-    print(f"  Accuracy:  {data['classic']['accuracy']}")
-    print("\nSemantic Metrics:")
-    print(f"  Cosine Mean: {data['semantic']['semantic_cosine_mean']}")
-    print(f"  Cosine Std:  ±{data['semantic']['semantic_cosine_std']}")
-    print(f"  Cosine Min:  {data['semantic']['semantic_cosine_min']}")
-    print(f"  Cosine Max:  {data['semantic']['semantic_cosine_max']}")
+    answers = batch_generate(questions)
 
+    metrics = {
+        "classic": calculate_classic_metrics(answers, references),
+        "semantic": calculate_semantic_metrics(answers, references),
+        "bertscore": calculate_bertscore(answers, references)
+    }
+
+    with open(f"metrics_fold_{fold_id}.json","w",encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2, ensure_ascii=False, default=lambda x: float(x))
+
+    return metrics
+
+# =========================
+# K-Fold 主流程
+# =========================
+def evaluate_kfold():
+    kf = KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=SEED)
+    all_results = []
+
+    for fold_id, (_, test_idx) in enumerate(kf.split(all_data), 1):
+
+        if RUN_SINGLE_FOLD and fold_id != SINGLE_FOLD_ID:
+            continue
+
+        print(f"\n===== Running Fold {fold_id}/{NUM_FOLDS} =====")
+        fold_data = [all_data[i] for i in test_idx]
+        fold_metrics = evaluate_one_fold(fold_data, fold_id)
+        all_results.append(fold_metrics)
+
+    summary = {}
+    for key in all_results[0]:
+        summary[key] = {}
+        for metric in all_results[0][key]:
+            values = [r[key][metric] for r in all_results]
+            summary[key][metric] = {
+                "mean": round(float(np.mean(values)), 4),
+                "std":  round(float(np.std(values)), 4)
+            }
+
+    with open("metrics_5fold_summary.json","w",encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+
+    print("\n===== 5-Fold Summary Saved =====")
+
+# =========================
+# 程序入口
+# =========================
 if __name__ == "__main__":
-    metrics, results = evaluate()
-    
-    print("\n=== Evaluation Results ===")
-    print(f"\nEvaluated {len(results)} samples")
-    
-    print_metrics("Answer", metrics["answer"])
-    if "cot" in metrics and metrics["cot"] is not None:
-        print_metrics("Chain-of-Thought", metrics["cot"])
-    print_metrics("Combined", metrics["combined"])
+    evaluate_kfold()
