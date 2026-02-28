@@ -2,7 +2,7 @@
 # Supplementary Information for:  
 **"Integrating Fine-Tuning and Retrieval-Augmented Generation to Address the Application Challenges of Pollution Control Guidelines"**
 
-This repository contains supplementary materials associated with the manuscript submitted to *Environmental Science & Technology*.
+This repository contains supplementary materials associated with the manuscript submitted to *Journal of Environmental Management.
 
 ---
 
